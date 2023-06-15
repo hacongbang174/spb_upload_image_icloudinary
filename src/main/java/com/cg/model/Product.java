@@ -1,15 +1,13 @@
 package com.cg.model;
 
-import com.cg.model.dto.ProductCreateResDTO;
-import com.cg.model.dto.ProductDTO;
-import com.cg.model.dto.ProductUpdateReqDTO;
-import com.cg.model.dto.ProductUpdateResDTO;
+import com.cg.model.dto.product.ProductCreateResDTO;
+import com.cg.model.dto.product.ProductDTO;
+import com.cg.model.dto.product.ProductUpdateResDTO;
 import lombok.AllArgsConstructor;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.Setter;
 import lombok.experimental.Accessors;
-import org.hibernate.annotations.GenericGenerator;
 
 import javax.persistence.*;
 import java.math.BigDecimal;

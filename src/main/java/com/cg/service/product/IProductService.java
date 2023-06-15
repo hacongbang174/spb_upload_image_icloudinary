@@ -2,9 +2,9 @@ package com.cg.service.product;
 
 import com.cg.model.Category;
 import com.cg.model.Product;
-import com.cg.model.dto.ProductCreateReqDTO;
-import com.cg.model.dto.ProductDTO;
-import com.cg.model.dto.ProductUpdateReqDTO;
+import com.cg.model.dto.product.ProductCreateReqDTO;
+import com.cg.model.dto.product.ProductDTO;
+import com.cg.model.dto.product.ProductUpdateReqDTO;
 import com.cg.service.IGeneralService;
 
 import java.util.List;

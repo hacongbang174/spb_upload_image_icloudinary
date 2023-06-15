@@ -4,13 +4,14 @@ package com.cg.api;
 import com.cg.exception.DataInputException;
 import com.cg.model.Category;
 import com.cg.model.Product;
-import com.cg.model.dto.*;
+import com.cg.model.dto.product.*;
 import com.cg.service.category.ICategoryService;
 import com.cg.service.product.IProductService;
 import com.cg.utils.ValidateUtils;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.validation.BindingResult;
 import org.springframework.web.bind.annotation.*;
 
 import java.io.IOException;
@@ -84,7 +85,9 @@ public class ProductAPI {
     }
 
     @PostMapping("/create")
-    public ResponseEntity<?> create(@ModelAttribute ProductCreateReqDTO productCreateReqDTO) {
+    public ResponseEntity<?> create(@ModelAttribute ProductCreateReqDTO productCreateReqDTO, BindingResult bindingResult) {
+
+        new ProductUpdateReqDTO().validate(productCreateReqDTO, bindingResult);
 
         Category category = categoryService.findById(productCreateReqDTO.getCategoryId()).orElseThrow(() -> {
             throw new DataInputException("Danh mục không tồn tại");
@@ -114,7 +117,10 @@ public class ProductAPI {
         }
     }
     @PatchMapping("/update/{id}")
-    public ResponseEntity<?> update(@PathVariable String id, @ModelAttribute ProductUpdateReqDTO productUpdateReqDTO) {
+    public ResponseEntity<?> update(@PathVariable String id, @ModelAttribute ProductUpdateReqDTO productUpdateReqDTO, BindingResult bindingResult) {
+
+        new ProductUpdateReqDTO().validate(productUpdateReqDTO, bindingResult);
+
         if (!validateUtils.isNumberValid(id)) {
             throw new DataInputException("Mã sản phẩm không hợp lệ");
         }

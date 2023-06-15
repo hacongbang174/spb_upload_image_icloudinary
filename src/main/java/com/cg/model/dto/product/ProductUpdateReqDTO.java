@@ -1,4 +1,4 @@
-package com.cg.model.dto;
+package com.cg.model.dto.product;
 
 import com.cg.model.Category;
 import com.cg.model.Product;
@@ -72,8 +72,10 @@ public class ProductUpdateReqDTO implements Validator {
     public void validate(Object target, Errors errors) {
         ProductUpdateReqDTO productUpdateReqDTO = (ProductUpdateReqDTO) target;
 
+        String title = productUpdateReqDTO.title;
         String quantity = productUpdateReqDTO.quantity;
         String price = productUpdateReqDTO.price;
+        String unit = productUpdateReqDTO.unit;
 
 
         if (quantity == null) {
@@ -91,17 +93,47 @@ public class ProductUpdateReqDTO implements Validator {
             }
         }
 
+        if (title == null) {
+            errors.rejectValue("title", "title.null", "Title là bắt buộc");
+        } else {
+            if (title.trim().length() == 0) {
+                errors.rejectValue("title", "title.empty", "Title là không được để trống");
+            } else {
+                if (title.trim().length() <= 5) {
+                    errors.rejectValue("title", "title.min", "Title phải có ít nhất 5 ký tự");
+                }
+                if (title.trim().length() > 100) {
+                    errors.rejectValue("title", "title.length.min-max", "Title phải nhỏ hơn 100 ký tự");
+                }
+            }
+        }
+
         if (price == null) {
             errors.rejectValue("price", "price.null", "Giá tiền là bắt buộc");
         } else {
             if (price.trim().length() == 0) {
-                errors.rejectValue("v", "price.empty", "Giá tiền là không được để trống");
+                errors.rejectValue("price", "price.empty", "Giá tiền là không được để trống");
             } else {
-                if (!price.toString().matches("\\d+")) {
+                if (!price.matches("\\d+")) {
                     errors.rejectValue("price", "price.match", "Giá tiền phải là ký tự số");
                 }
-                if (Long.parseLong(price) <= 0 || Long.parseLong(price) > 1000000) {
-                    errors.rejectValue("price", "price.length.min-max", "Giá tiền phải lớn hơn 0 và nhỏ hơn 1.000.000đ");
+                if (!Pattern.matches("\\b([1-9]\\d{2,11}|999999999)\\b", price)) {
+                    errors.rejectValue("price", "price.length.min-max", "Giá tiền phải lớn hơn 100 VNĐ và nhỏ hơn 999.999.999 VNĐ");
+                }
+            }
+        }
+
+        if (unit == null) {
+            errors.rejectValue("unit", "unit.null", "Đơn vị tính là bắt buộc");
+        } else {
+            if (unit.trim().length() == 0) {
+                errors.rejectValue("unit", "unit.empty", "Đơn vị tính là không được để trống");
+            } else {
+                if (unit.trim().length() <= 2) {
+                    errors.rejectValue("unit", "unit.min", "Đơn vị tính phải có ít nhất 3 ký tự");
+                }
+                if (unit.trim().length() > 20) {
+                    errors.rejectValue("unit", "unit.length.min-max", "Đơn vị tính phải nhỏ hơn 20 ký tự");
                 }
             }
         }

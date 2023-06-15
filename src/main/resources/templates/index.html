@@ -120,7 +120,8 @@
     page.dialogs.elements.contextCreate = page.dialogs.elements.canvasCreate[0].getContext('2d');
     page.dialogs.elements.contextUpdate = page.dialogs.elements.canvasUpdate[0].getContext('2d');
     page.dialogs.elements.imagePreview.css("display", "none");
-    page.dialogs.elements.divImagePreview = $("div.image-preview, div.file-name");
+    page.dialogs.elements.divImagePreviewCreate = $("#mdCreate div.image-preview, #mdCreate div.file-name");
+    page.dialogs.elements.divImagePreviewUpdate = $("#mdUpdate div.image-preview, #mdUpdate div.file-name");
     page.dialogs.elements.btnClearImagePreview = $(".clear-image-preview i");
 
 
@@ -250,6 +251,7 @@
     }
 
     page.commands.showDeleteConfirm = () => {
+
         AppBase.showDeleteConfirmDialog()
             .then((result) => {
                 if (result.isConfirmed) {
@@ -405,6 +407,7 @@
         }).done((data) => {
             product = data;
             avatar = product.avatar;
+
             page.commands.replace(productId);
 
             AppBase.showSuccessAlert(AppBase.SUCCESS_CREATED);
@@ -437,7 +440,7 @@
 
             AppBase.showSuccessAlert(AppBase.SUCCESS_DELETED);
 
-            $("#" + product.id).remove();
+            $("#tr_" + product.id).remove();
 
             page.commands.handleImagePopup();
 
@@ -481,13 +484,139 @@
         page.dialogs.elements.wrapperContent.css("opacity", 1);
     }
 
+    page.dialogs.elements.frmCreateCustomer.validate({
+        rules: {
+            productTitle: {
+                required: true,
+            },
+            productPrice: {
+                required: true,
+                min: 100,
+                max: 999999999,
+                number: true
+            },
+            productUnit: {
+                required: true
+            },
+            categorySelectCreate: {
+                required: true,
+                number: true
+
+            }
+        },
+        messages: {
+            productTitle: {
+                required: "Vui lòng nhập tên sản phẩm.",
+            },
+            productPrice: {
+                required: "Vui lòng nhập giá.",
+                number: "Giá sản phẩm phải là số.",
+                min: "Giá sản phẩm tối thiểu là 100 VNĐ.",
+                max: "Giá sản phẩm tối đa là 999.999.999 VNĐ."
+            },
+            productUnit: {
+                required: "Vui lòng nhập loại sản phẩm."
+            },
+            categorySelectCreate: {
+                required: "Vui lòng nhập loại sản phâ.",
+                number: "mã category không đúng. vui lòng chọn lại."
+            }
+        },
+        errorLabelContainer: "#mdCreate .modal-alert-danger",
+        errorPlacement: function (error, element) {
+            error.appendTo("#mdCreate .modal-alert-danger");
+        },
+        showErrors: function (errorMap, errorList) {
+            if (this.numberOfInvalids() > 0) {
+                $("#mdCreate .modal-alert-danger").removeClass("hide").addClass("show");
+            } else {
+                $("#mdCreate .modal-alert-danger").removeClass("show").addClass("hide").empty();
+                $("#frmCreateCustomer input.error").removeClass("error");
+            }
+            this.defaultShowErrors();
+        },
+        submitHandler: function () {
+            page.dialogs.commands.createProduct();
+        }
+    })
+
+    page.dialogs.elements.frmUpdateCustomer.validate({
+        rules: {
+            productTitleUP: {
+                required: true,
+            },
+            productPriceUp: {
+                required: true,
+                min: 100,
+                max: 999999999,
+                number: true
+            },
+            productQuantityUp: {
+                required: true,
+                min: 1,
+                max: 999,
+                number: true
+            },
+            productUnitUp: {
+                required: true
+            },
+            categorySelectUpdate: {
+                required: true,
+                number: true
+
+            }
+        },
+        messages: {
+            productTitleUP: {
+                required: "Vui lòng nhập tên sản phẩm.",
+            },
+            productPriceUp: {
+                required: "Vui lòng nhập giá.",
+                number: "Giá sản phẩm phải là số.",
+                min: "Giá sản phẩm tối thiểu là 100 VNĐ.",
+                max: "Giá sản phẩm tối đa là 999.999.999 VNĐ."
+            },
+            productQuantityUpUp: {
+                required: "Vui lòng nhập số lượng sản phẩm.",
+                number: "Số lượng sản phẩm phải là số.",
+                min: "Số lượng sản phẩm tối thiểu là 1.",
+                max: "Số lượng sản phẩm tối đa là 999."
+            },
+            productUnitUp: {
+                required: "Vui lòng nhập loại sản phẩm."
+            },
+            categorySelectUpdate: {
+                required: "Vui lòng nhập loại sản phâ.",
+                number: "mã category không đúng. vui lòng chọn lại."
+            }
+        },
+        errorLabelContainer: "#mdUpdate .modal-alert-danger",
+        errorPlacement: function (error, element) {
+            error.appendTo("#mdUpdate .modal-alert-danger");
+        },
+        showErrors: function (errorMap, errorList) {
+            if (this.numberOfInvalids() > 0) {
+                $("#mdUpdate .modal-alert-danger").removeClass("hide").addClass("show");
+            } else {
+                $("#mdUpdate .modal-alert-danger").removeClass("show").addClass("hide").empty();
+                $("#frmUpdateProduct input.error").removeClass("error");
+            }
+            this.defaultShowErrors();
+        },
+        submitHandler: function () {
+            page.dialogs.commands.updateProduct();
+        }
+    })
+
     page.initializeControlEvent = () => {
         page.dialogs.elements.btnCreate.on("click", function () {
-            page.dialogs.commands.createProduct();
+            page.dialogs.elements.frmCreateCustomer.trigger('submit');
+
         });
 
         page.dialogs.elements.btnUpdate.on("click", function () {
-            page.dialogs.commands.updateProduct();
+            // page.dialogs.commands.createProduct();
+            page.dialogs.elements.frmUpdateCustomer.trigger('submit');
         });
 
         page.elements.frmListProduct.on("click", ".delete", function () {
@@ -496,10 +625,14 @@
             page.commands.showDeleteConfirm();
         });
 
-        page.dialogs.elements.divImagePreview.on("click", function () {
+        page.dialogs.elements.divImagePreviewCreate.on("click", function () {
             page.dialogs.elements.imageFileCreate.trigger("click");
+
+        });
+        page.dialogs.elements.divImagePreviewUpdate.on("click", function () {
             page.dialogs.elements.imageFileUpdate.trigger("click");
         });
+
 
         page.dialogs.elements.imageFileCreate.on("change", function () {
             page.dialogs.commands.changeImagePreviewCreate();
