@@ -1,0 +1,535 @@
+<!DOCTYPE html>
+<html lang="en" xmlns:th="http://www.thymeleaf.org">
+
+<head>
+    <title>List of products</title>
+    <th:block th:replace="/layout/head :: head"></th:block>
+</head>
+
+<body>
+<div class="container-fluid">
+
+    <th:block th:replace="/header :: header"/>
+
+    <div>
+
+        <th:block th:replace="/frm_list_table :: frm_list_table"/>
+        <!-- Modal Create Customer -->
+        <th:block th:replace="/modal-create :: modal-create"></th:block>
+
+        <!-- Modal Update Customer -->
+        <th:block th:replace="/modal-update :: modal-update"></th:block>
+
+
+        <input type="hidden" id="currentRow"/>
+
+        <table id="tbProduct" class="table table-hover">
+            <thead>
+            <tr>
+                <!--                <th></th>-->
+                <th>#</th>
+                <th>Title</th>
+                <th>Price</th>
+                <th>Quantity</th>
+                <th>Unit</th>
+                <th>Description</th>
+                <th>Category Name</th>
+                <th>Image</th>
+                <th>Action</th>
+            </tr>
+            </thead>
+            <tbody>
+            </tbody>
+        </table>
+    </div>
+
+
+</div>
+
+<div class="loader hide"></div>
+
+<footer class="container-fluid hide">
+</footer>
+
+<script src="/assets/jquery/jquery-3.7.0.min.js"></script>
+<script src="/assets/jquery/jquery.validate.js"></script>
+<script src="/assets/bootstrap/v5.3.0/js/bootstrap.bundle.min.js"></script>
+<script src="/assets/sweetalert2/sweetalert2.all.min.js"></script>
+<script src="/assets/js/magnific-popup-1.1.0.js"></script>
+
+<script src="/assets/js/appBase.js"></script>
+
+<script>
+    const page = {
+        url: {
+            getAllProduct: AppBase.API_PRODUCT,
+            getAllCategories: AppBase.API_CATEGORY,
+
+            doCreate: AppBase.API_CREATE_PRODUCT,
+            doUpdate: AppBase.API_UPDATE_PRODUCT,
+            doDelete: AppBase.API_DELETE_PRODUCT
+        },
+        elements: {},
+        loadData: {},
+        commands: {},
+        dialogs: {
+            elements: {},
+            commands: {},
+            loadData: {}
+        }
+    }
+
+    page.elements.frmListProduct = $('#tbProduct tbody')
+
+    page.elements.loader = $(".loader");
+    page.elements.tempProduct = $("#tempProduct");
+    page.elements.currentRow = $("#currentRow");
+    page.elements.btnShowCreateForm = $("a.create-modal");
+
+
+    page.dialogs.elements.frmCreateCustomer = $('#frmCreateProduct');
+    page.dialogs.elements.modalCreate = $('#mdCreate')
+    page.dialogs.elements.errorCreateArea = $('#mdCreate .modal-body .modal-alert-danger')
+    page.dialogs.elements.productTitle = $('#productTitle')
+    page.dialogs.elements.productPrice = $('#productPrice')
+    page.dialogs.elements.productUnit = $('#productUnit')
+    page.dialogs.elements.description = $('#description')
+    page.dialogs.elements.btnCreate = $('#btnCreate')
+    page.dialogs.elements.categorySelectCreate = $('#categorySelectCreate')
+
+    page.elements.btnShowUpdateForm = $("a.update-modal");
+    page.dialogs.elements.frmUpdateCustomer = $('#frmUpdateProduct');
+    page.dialogs.elements.modalUpdate = $('#mdUpdate')
+    page.dialogs.elements.errorUpdateArea = $('#mdUpdate .modal-body .modal-alert-danger')
+    page.dialogs.elements.productTitleUP = $('#productTitleUP')
+    page.dialogs.elements.productQuantityUp = $('#productQuantityUp')
+    page.dialogs.elements.productPriceUp = $('#productPriceUp')
+    page.dialogs.elements.productUnitUp = $('#productUnitUp')
+    page.dialogs.elements.descriptionUp = $('#descriptionUp')
+    page.dialogs.elements.btnUpdate = $('#btnUpdate')
+    page.dialogs.elements.categorySelectUpdate = $('#categorySelectUpdate')
+
+
+    page.dialogs.elements.wrapper = $("section .wrapper");
+    page.dialogs.elements.imageFileCreate = $("#imageFileCreate");
+    page.dialogs.elements.imageFileUpdate = $("#imageFileUpdate");
+    page.dialogs.elements.wrapperContent = $("section .wrapper .content");
+    page.dialogs.elements.imagePreview = $("section .image-preview canvas");
+    page.dialogs.elements.canvasCreate = $("#canvasCreate");
+    page.dialogs.elements.canvasUpdate = $("#canvasUpdate");
+    page.dialogs.elements.contextCreate = page.dialogs.elements.canvasCreate[0].getContext('2d');
+    page.dialogs.elements.contextUpdate = page.dialogs.elements.canvasUpdate[0].getContext('2d');
+    page.dialogs.elements.imagePreview.css("display", "none");
+    page.dialogs.elements.divImagePreview = $("div.image-preview, div.file-name");
+    page.dialogs.elements.btnClearImagePreview = $(".clear-image-preview i");
+
+
+    // page.elements.btnDelete = $("#tempProduct body");
+    let productId = 0;
+
+    let product = new Product();
+    let avatar = new Avatar();
+
+    let tempProduct = jQuery.validator.format($.trim(page.elements.tempProduct.val().toString()));
+
+    page.commands.addRow = () => {
+        let image_thumbnail = AppBase.BASE_URL_CLOUD_IMAGE + "/" + AppBase.BASE_SCALE_IMAGE + "/" + avatar.fileFolder + "/" + avatar.fileName;
+        let imageFileUrl = AppBase.BASE_URL_CLOUD_IMAGE + "/" + avatar.fileFolder + "/" + avatar.fileName;
+        let aClass = "image-popup-vertical-fit";
+
+        page.elements.frmListProduct.prepend($(tempProduct(product.id, product.title, product.price, product.quantity, product.unit, product.description, product.categoryTitle, imageFileUrl, image_thumbnail, aClass)));
+    }
+
+    page.commands.replace = (productId) => {
+        let image_thumbnail = AppBase.BASE_URL_CLOUD_IMAGE + "/" + AppBase.BASE_SCALE_IMAGE + "/" + avatar.fileFolder + "/" + avatar.fileName;
+        let imageFileUrl = AppBase.BASE_URL_CLOUD_IMAGE + "/" + avatar.fileFolder + "/" + avatar.fileName;
+        let aClass = "image-popup-vertical-fit";
+
+        $('#tr_' + productId).replaceWith($(tempProduct(product.id, product.title, product.price, product.quantity, product.unit, product.description, product.categoryTitle, imageFileUrl, image_thumbnail, aClass)));
+    }
+
+
+    page.commands.getAllProduct = () => {
+        $.ajax({
+            type: 'GET',
+            url: page.url.getAllProduct
+        })
+            .done((data) => {
+                $.each(data, (index, item) => {
+                    product = new Product(item.id, item.title, item.price, item.quantity, item.unit, item.description, item.category.title);
+                    avatar = item.avatar;
+                    page.commands.addRow();
+                })
+                page.commands.showCreateModal();
+                page.commands.showUpdateModal();
+                // page.commands.addEventShowActionButton();
+            })
+            .fail(function () {
+                AppBase.showErrorAlert(AppBase.ERROR_404);
+            });
+    }
+
+    page.commands.getProductById = (productId) => {
+        return $.ajax({
+            type: 'GET',
+            url: page.url.getAllProduct + '/' + productId
+        });
+    }
+
+    page.commands.getCategories = () => {
+
+        $.ajax({
+            headers: {
+                'Accept': 'application/json',
+                'Content-Type': 'application/json'
+            },
+            type: 'GET',
+            url: page.url.getAllCategories,
+        })
+            .done((data) => {
+                page.dialogs.elements.categorySelectCreate.empty();
+                page.dialogs.elements.categorySelectUpdate.empty();
+
+                $.each(data, function (index, item) {
+                    console.log('321')
+                    page.dialogs.elements.categorySelectCreate.append($('<option>').val(item.id).text(item.title));
+                    page.dialogs.elements.categorySelectUpdate.append($('<option>').val(item.id).text(item.title));
+                })
+            })
+            .fail((jqXHR, textStatus, errorThrown) => {
+                console.log('Error: ' + textStatus + ' ' + errorThrown);
+            })
+    }
+
+    page.commands.showCreateModal = () => {
+        page.elements.btnShowCreateForm.on("click", function () {
+            delete product.id;
+            page.commands.getCategories();
+            page.dialogs.elements.modalCreate.modal('show');
+        });
+
+    }
+
+
+    page.commands.showUpdateModal = () => {
+
+        $('a.update-modal').on("click", function () {
+            page.commands.getCategories();
+            productId = $(this).data('id');
+            page.commands.getProductById(productId).then((data) => {
+                if (data !== {}) {
+                    product = data;
+                    avatar = product.avatar;
+
+                    page.dialogs.elements.productTitleUP.val(product.title);
+                    page.dialogs.elements.productPriceUp.val(product.price);
+                    page.dialogs.elements.productUnitUp.val(product.unit);
+                    page.dialogs.elements.productQuantityUp.val(product.quantity);
+
+
+                    page.dialogs.elements.categorySelectUpdate.val(product.category.id);
+
+
+                    page.dialogs.elements.descriptionUp.val(product.description);
+
+                    page.dialogs.commands.loadImageToCanvasUpdate(null, "", avatar.fileUrl);
+
+                    page.dialogs.elements.modalUpdate.modal('show');
+
+                    page.dialogs.elements.errorUpdateArea.empty();
+
+                } else {
+                    alert('Customer not found');
+                }
+
+            })
+        });
+
+        // page.commands.getCategories();
+        // page.dialogs.elements.modalUpdate.modal('show');
+    }
+
+    page.commands.showDeleteConfirm = () => {
+        AppBase.showDeleteConfirmDialog()
+            .then((result) => {
+                if (result.isConfirmed) {
+                    page.commands.deleteProduct();
+                }
+            });
+    }
+
+    page.dialogs.commands.loadImageToCanvas = (imageFile, fileType, imageUrl) => {
+        page.dialogs.elements.imagePreview.css("display", "");
+        page.dialogs.elements.wrapper.addClass("active");
+        page.dialogs.elements.wrapperContent.css("opacity", 0);
+
+        let imageObj = new Image();
+
+        imageObj.onload = function () {
+            page.dialogs.elements.contextCreate.canvas.width = imageObj.width;
+            page.dialogs.elements.contextCreate.canvas.height = imageObj.height;
+            page.dialogs.elements.contextCreate.drawImage(imageObj, 0, 0, imageObj.width, imageObj.height);
+
+        };
+
+        if (fileType === "BINARY") {
+            imageObj.src = URL.createObjectURL(imageFile);
+        } else {
+            imageObj.src = imageUrl;
+        }
+    }
+    page.dialogs.commands.loadImageToCanvasUpdate = (imageFile, fileType, imageUrl) => {
+        page.dialogs.elements.imagePreview.css("display", "");
+        page.dialogs.elements.wrapper.addClass("active");
+        page.dialogs.elements.wrapperContent.css("opacity", 0);
+
+        let imageObj = new Image();
+
+        imageObj.onload = function () {
+            page.dialogs.elements.contextUpdate.canvas.width = imageObj.width;
+            page.dialogs.elements.contextUpdate.canvas.height = imageObj.height;
+            page.dialogs.elements.contextUpdate.drawImage(imageObj, 0, 0, imageObj.width, imageObj.height);
+
+        };
+
+        if (fileType === "BINARY") {
+            imageObj.src = URL.createObjectURL(imageFile);
+        } else {
+            imageObj.src = imageUrl;
+        }
+    }
+
+    page.dialogs.commands.changeImagePreviewCreate = () => {
+        let imageFile = page.dialogs.elements.imageFileCreate[0].files[0];
+
+
+        if (imageFile) {
+            let reader = new FileReader();
+
+            reader.readAsDataURL(imageFile);
+
+            reader.onload = function (e) {
+                if (e.target.readyState === FileReader.DONE) {
+                    page.dialogs.commands.loadImageToCanvas(imageFile, "BINARY", null);
+                }
+            }
+        } else {
+            page.dialogs.elements.clearImagePreview();
+        }
+    }
+    page.dialogs.commands.changeImagePreviewUpdate = () => {
+        let imageFile = page.dialogs.elements.imageFileUpdate[0].files[0];
+
+
+        if (imageFile) {
+            let reader = new FileReader();
+
+            reader.readAsDataURL(imageFile);
+
+            reader.onload = function (e) {
+                if (e.target.readyState === FileReader.DONE) {
+                    page.dialogs.commands.loadImageToCanvasUpdate(imageFile, "BINARY", null);
+                }
+            }
+        } else {
+            page.dialogs.elements.clearImagePreview();
+        }
+    }
+
+    page.dialogs.commands.createProduct = () => {
+        page.elements.loader.removeClass("hide");
+        page.dialogs.elements.btnCreate.prop('disabled', true);
+
+        let formData = new FormData();
+        formData.append("title", page.dialogs.elements.productTitle.val().toString());
+        formData.append("price", page.dialogs.elements.productPrice.val().toString());
+        formData.append("unit", page.dialogs.elements.productUnit.val().toString());
+        formData.append("description", page.dialogs.elements.description.val().toString());
+        formData.append("categoryId", page.dialogs.elements.categorySelectCreate.val());
+        formData.append("avatar", page.dialogs.elements.imageFileCreate[0].files[0]);
+
+        $.ajax({
+            type: "POST",
+            contentType: false,
+            cache: false,
+            processData: false,
+            url: page.url.doCreate,
+            data: formData
+        }).done((data) => {
+
+            product = data;
+            avatar = product.avatar;
+
+            page.commands.addRow();
+
+            AppBase.showSuccessAlert(AppBase.SUCCESS_CREATED);
+
+            page.dialogs.elements.modalCreate.modal('hide');
+
+            page.commands.handleImagePopup();
+
+        }).fail((err) => {
+            console.log(err)
+            AppBase.showErrorAlert(AppBase.ERROR_404);
+        }).always(function () {
+            page.elements.loader.addClass("hide");
+            page.dialogs.elements.btnCreate.prop('disabled', false);
+        });
+    }
+
+    page.dialogs.commands.updateProduct = () => {
+
+        page.elements.loader.removeClass("hide");
+        page.dialogs.elements.btnUpdate.prop('disabled', true);
+
+
+        let formData = new FormData();
+        formData.append("title", page.dialogs.elements.productTitleUP.val().toString());
+        formData.append("price", page.dialogs.elements.productPriceUp.val().toString());
+        formData.append("quantity", page.dialogs.elements.productQuantityUp.val().toString());
+        formData.append("unit", page.dialogs.elements.productUnitUp.val().toString());
+        formData.append("description", page.dialogs.elements.descriptionUp.val().toString());
+        formData.append("categoryId", page.dialogs.elements.categorySelectUpdate.val());
+
+        if (page.dialogs.elements.imageFileUpdate[0].files[0] != null) {
+            formData.append("avatar", page.dialogs.elements.imageFileUpdate[0].files[0]);
+        }
+
+        $.ajax({
+            type: "PATCH",
+            contentType: false,
+            cache: false,
+            processData: false,
+            url: page.url.doUpdate + '/' + productId,
+            data: formData
+        }).done((data) => {
+            product = data;
+            avatar = product.avatar;
+            page.commands.replace(productId);
+
+            AppBase.showSuccessAlert(AppBase.SUCCESS_CREATED);
+
+            page.dialogs.elements.modalUpdate.modal('hide');
+
+            page.commands.handleImagePopup();
+            page.commands.showUpdateModal();
+
+        }).fail((err) => {
+            console.log(err)
+            AppBase.showErrorAlert(AppBase.ERROR_400);
+        }).always(function () {
+            page.elements.loader.addClass("hide");
+            page.dialogs.elements.btnUpdate.prop('disabled', false);
+        });
+    }
+
+    page.commands.deleteProduct = () => {
+        page.elements.loader.removeClass("hide");
+
+        $.ajax({
+            type: "DELETE",
+            headers: {
+                'Accept': 'application/json',
+                'Content-Type': 'application/json'
+            },
+            url: page.url.doDelete + '/' + product.id,
+        }).done((data) => {
+
+            AppBase.showSuccessAlert(AppBase.SUCCESS_DELETED);
+
+            $("#" + product.id).remove();
+
+            page.commands.handleImagePopup();
+
+        }).fail(function (jqXHR) {
+            AppBase.showErrorAlert(jqXHR.responseJSON.message);
+        }).always(function () {
+            page.elements.loader.addClass("hide");
+        });
+    }
+
+    page.commands.handleImagePopup = () => {
+
+        $('.image-popup-vertical-fit').magnificPopup({
+            type: 'image',
+            closeOnContentClick: true,
+            mainClass: 'mfp-img',
+            image: {
+                verticalFit: true
+            },
+            gallery: {
+                enabled: true
+            }
+        });
+
+        $('.popup-youtube, .popup-vimeo, .popup-gmaps').magnificPopup({
+            disableOn: 700,
+            type: 'iframe',
+            mainClass: 'mfp-fade',
+            removalDelay: 160,
+            preloader: false,
+            fixedContentPos: false
+        });
+    }
+
+
+    page.dialogs.elements.clearImagePreview = () => {
+        page.dialogs.elements.imageFileCreate.val("");
+        page.dialogs.elements.imageFileUpdate.val("");
+        page.dialogs.elements.imagePreview.css("display", "none");
+        page.dialogs.elements.wrapper.removeClass("active");
+        page.dialogs.elements.wrapperContent.css("opacity", 1);
+    }
+
+    page.initializeControlEvent = () => {
+        page.dialogs.elements.btnCreate.on("click", function () {
+            page.dialogs.commands.createProduct();
+        });
+
+        page.dialogs.elements.btnUpdate.on("click", function () {
+            page.dialogs.commands.updateProduct();
+        });
+
+        page.elements.frmListProduct.on("click", ".delete", function () {
+            // page.elements.currentRow.val($(this).closest("tr").attr("id"));
+            product.id = $(this).data('id');
+            page.commands.showDeleteConfirm();
+        });
+
+        page.dialogs.elements.divImagePreview.on("click", function () {
+            page.dialogs.elements.imageFileCreate.trigger("click");
+            page.dialogs.elements.imageFileUpdate.trigger("click");
+        });
+
+        page.dialogs.elements.imageFileCreate.on("change", function () {
+            page.dialogs.commands.changeImagePreviewCreate();
+        });
+        page.dialogs.elements.imageFileUpdate.on("change", function () {
+            page.dialogs.commands.changeImagePreviewUpdate();
+        });
+
+        page.dialogs.elements.btnClearImagePreview.on("click", function () {
+            page.dialogs.elements.clearImagePreview();
+        });
+
+        page.commands.handleImagePopup();
+
+    }
+
+
+    page.loadData = () => {
+        page.commands.getAllProduct();
+    }
+
+    $(() => {
+        page.commands.getAllProduct();
+        page.initializeControlEvent();
+
+    })
+
+
+</script>
+
+</body>
+
+</html>

@@ -1,0 +1,19 @@
+{
+  "properties": [
+    {
+      "name": "cloudinary.uploader.cloud-name",
+      "type": "java.lang.String",
+      "description": "Description for cloudinary.uploader.cloud-name."
+    },
+    {
+      "name": "cloudinary.uploader.api-key",
+      "type": "java.lang.String",
+      "description": "Description for cloudinary.uploader.api-key."
+    },
+    {
+      "name": "cloudinary.uploader.api-secret",
+      "type": "java.lang.String",
+      "description": "Description for cloudinary.uploader.api-secret."
+    }
+  ]
+}
