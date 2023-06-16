@@ -87,7 +87,7 @@ public class ProductAPI {
     @PostMapping("/create")
     public ResponseEntity<?> create(@ModelAttribute ProductCreateReqDTO productCreateReqDTO, BindingResult bindingResult) {
 
-        new ProductUpdateReqDTO().validate(productCreateReqDTO, bindingResult);
+        new ProductCreateReqDTO().validate(productCreateReqDTO, bindingResult);
 
         Category category = categoryService.findById(productCreateReqDTO.getCategoryId()).orElseThrow(() -> {
             throw new DataInputException("Danh mục không tồn tại");
